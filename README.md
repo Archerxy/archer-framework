@@ -1,8 +1,11 @@
-# archer-framework
+# archer-framework 
 A light spring-boot-like framework. 
 
-## todo-list
-1. add data source like mysql, h2, etc.
-2. add async function
-3. add timer
-4. ...
+## demos
+see 
+
+## todo-list 
+1. add data source like mysql, h2, etc.  
+2. add async function  
+3. add timer  
+4. ...  
