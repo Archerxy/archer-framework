@@ -1,0 +1,21 @@
+archer:
+  app-name: "first-app"
+
+  context-path: /api
+
+  http: 
+    port: 9617
+    max-body: 20M
+    header: # response header
+      - access-control-allow-origin=https://www.baidu.com # * to allow all
+      - access-control-request-method=POST,PUT,GET # * to allow all
+
+  log:
+    level: INFO # TRACE DEBUG INFO WARN ERROR
+    time-pattern: yyyy-MM-dd HH:mm:ss.SSS # or yyyy-MM-dd HH:mm:ss etc.
+    class-pattern: class.method.line # or class-method-line etc.
+    keep-days: 30 # -1 to keep forever
+    log-path: logs # logfiles will save at ${workspace}/logs/
+    file-name: archer-log 
+
+
