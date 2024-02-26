@@ -2,7 +2,7 @@
 A light spring-boot-like framework. 
 
 ## demos
-see 
+see src/demos
 
 ## todo-list 
 1. add data source like mysql, h2, etc.  
