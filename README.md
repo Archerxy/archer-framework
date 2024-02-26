@@ -1,5 +1,5 @@
 # archer-framework 
-A light spring-boot-like framework. 
+A lightweight spring-boot-like framework. 
 
 ## demos
 see src/demos
