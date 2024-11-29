@@ -22,25 +22,13 @@ import com.archer.tools.bytecode.constantpool.ConstantUtf8;
 
 
 public class AsyncProxy {
-
-	/*
+	
 	private static final String ASYNC_TYPE = "Lcom/archer/framework/base/annotation/Async;";
 	private static final String THREADPOOL_CLASS = "com/archer/framework/base/async/AsyncPool";
 	private static final String THREADPOOL_TYPE = "Lcom/archer/framework/base/async/AsyncPool;";
 	private static final String POOL_NAME = "pool";
 	private static final String SUBMIT_TASK_CLASS = "com/archer/framework/base/async/AsyncTask";
 	private static final String SUBMIT_TASK_TYPE = "Lcom/archer/framework/base/async/AsyncTask;";
-	private static final String OBJECT_CLASS = "java/lang/Object";
-	private static final String THIS_NAME = "this";
-	private static final String TASK_FIELD_NAME = "ins";
-	 */
-	
-	private static final String ASYNC_TYPE = "Lcom/archer/framework/base/annotation/Async;";
-	private static final String THREADPOOL_CLASS = "com/archer/net/ThreadPool";
-	private static final String THREADPOOL_TYPE = "Lcom/archer/net/ThreadPool;";
-	private static final String POOL_NAME = "pool";
-	private static final String SUBMIT_TASK_CLASS = "com/archer/net/ThreadPoolTask";
-	private static final String SUBMIT_TASK_TYPE = "Lcom/archer/net/ThreadPoolTask;";
 	private static final String OBJECT_CLASS = "java/lang/Object";
 	private static final String THIS_NAME = "this";
 	private static final String TASK_FIELD_NAME = "ins";
@@ -1039,3 +1027,4 @@ public class AsyncProxy {
 	}
 	
 }
+
