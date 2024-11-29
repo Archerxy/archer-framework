@@ -11,7 +11,7 @@ public @interface Get {
 
 	String pattern();
 	
-	String reqContentType() default "application/json; charset=utf-8";
+	String reqContentType() default "application/json";
 
-	String resContentType() default "application/json; charset=utf-8";
+	String resContentType() default "application/json";
 }

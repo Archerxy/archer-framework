@@ -14,9 +14,6 @@ public final class Conf {
 	}
 	
 	protected Conf(List<ConfNode> configs) {
-//		for(ConfNode node : configs) {
-//			System.out.println(node.key +":" + node.val+" *** isArr:" + node.isArr);
-//		}
 		this.configs = configs;
 	}
 	

@@ -39,7 +39,7 @@ class ConfParser {
 	static List<ConfNode> parse(String content) {
 		char[] chars = content.toCharArray();
 		char[][] lines = new char[CONFIG_SIZE][];
-		int idx = 0, p = 0, contains = 0;
+		int idx = 0, p = 0, contains = 0, ok = 0;
 		for(int i = 0; i < content.length(); i++) {
 			if(content.charAt(i) == ENTER) {
 				if(idx < i && contains > 0) {
@@ -50,7 +50,20 @@ class ConfParser {
 						e = i;
 						i++;
 					}
-					lines[p++] = Arrays.copyOfRange(chars, idx, e);
+					ok = 0;
+					if(WELL != content.charAt(idx)) {
+						for(int j = idx; j <= e; j++) {
+							if(SLASH != content.charAt(j) && LINEB != content.charAt(j) && 
+								TAB != content.charAt(j) && BACKSLASH != content.charAt(j) &&
+								SPACE != content.charAt(j)) {
+								ok = 1;
+								break ;
+							}
+						}
+					}
+					if(ok == 1) {
+						lines[p++] = Arrays.copyOfRange(chars, idx, e);
+					}
 				}
 				contains = 0;
 				idx++;
@@ -111,6 +124,8 @@ class ConfParser {
 				}
 			}
 			if(ks >= ke - 1) {
+				System.out.println("before line = " + new String(lines[i-1]));
+				System.out.println("cur line = " + new String(lines[i]));
 				throw new ConfigException("Invalid line: " + new String(l));
 			}
 

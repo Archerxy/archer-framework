@@ -4,8 +4,8 @@ import com.archer.net.http.HttpRequest;
 import com.archer.net.http.HttpResponse;
 
 public interface ResponseFilter {
-	
-	FilterState outputMessage(HttpRequest req, HttpResponse res);
 
+	FilterState onResponse(HttpRequest req, HttpResponse res, Object ret);
+	
 	int priority();
 }

@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.archer.framework.base.exceptions.ContainerException;
+import com.archer.framework.base.exceptions.ArcherApplicationException;
 import com.archer.framework.base.exceptions.TypeException;
 import com.archer.framework.base.util.ParamReflectUtil;
 import com.archer.framework.web.annotation.BodyParam;
@@ -21,8 +21,8 @@ import com.archer.framework.web.annotation.Put;
 import com.archer.framework.web.annotation.QueryParam;
 import com.archer.framework.web.exceptions.ApiException;
 import com.archer.framework.web.exceptions.ParamException;
-import com.archer.framework.web.filter.AnnotationFilter;
-import com.archer.framework.web.filter.Filter;
+import com.archer.framework.web.filter.AnnotationRequestFilter;
+import com.archer.framework.web.filter.AnnotationResponseFilter;
 import com.archer.framework.web.filter.FilterState;
 import com.archer.framework.web.util.MultipartUtil;
 import com.archer.net.http.ContentType;
@@ -46,7 +46,7 @@ public class Api {
 	public static final String CN_PATTERN = "*";
 	
 	
-	public static void findAndSaveApi(List<Api> pathApis, Map<String, Api> apis, Filter filter, 
+	public static void findAndSaveApi(List<Api> pathApis, Map<String, Api> apis, 
 			Method[] methods, String prefixUri, Object instance) {
 		for(Method m: methods) {
 			String uri = null, httpMethod = null, reqContentType = null, resContentType= null;
@@ -122,7 +122,7 @@ public class Api {
 						}
 					}
 				}
-				Api api = new Api(instance, m, filter, httpMethod, uri, reqContentType, resContentType);
+				Api api = new Api(instance, m, httpMethod, uri, reqContentType, resContentType);
 				if(api.isPathApi()) {
 					pathApis.add(api);
 				} else {
@@ -175,19 +175,20 @@ public class Api {
 	
 	RequestParam[] orderedParams;
 	
-	List<AnnotationFilter> antFilters;
+	List<AnnotationRequestFilter> antReqFilters;
+	List<AnnotationResponseFilter> antResFilters;
 	
 	Api(String uri) {
-		this(null, null, null, OPTION, uri, 
+		this(null, null, OPTION, uri, 
 				ContentType.APPLICATION_JSON.getName(), 
 				ContentType.APPLICATION_JSON.getName());
 		this.beforeOption = true;
 	}
 	
-	Api(Object instance, Method method, Filter filter,
+	Api(Object instance, Method method,
 			String httpMethod, String uri, String reqContentType,
 			String resContentType) {
-		super();
+		
 		this.instance = instance;
 		this.method = method;
 		this.httpMethod = httpMethod;
@@ -196,6 +197,8 @@ public class Api {
 		this.reqContentType = reqContentType;
 		this.resContentType = resContentType;
 		this.pathParams = new ArrayList<>(8);
+		this.antReqFilters = new ArrayList<>(16);
+		this.antResFilters = new ArrayList<>(16);
 		
 		parseUri();
 		if(method != null) {
@@ -210,17 +213,16 @@ public class Api {
 				}
 				annotations.add(ant);
 			}
-			this.antFilters = filter.getAnnotationFilters(annotations);
-			
 			parseParam();
 		}
+		
 	}
 	
 	private void parseUri() {
 		int off = 0, s = 0, e = 0;
 		while((s = uri.indexOf("/{", off)) >= 0 && (e = uri.indexOf("}/", off)) > 0)  {
 			if(e <= s) {
-				throw new ContainerException("can not parse uri " + uri);
+				throw new ArcherApplicationException("can not parse uri " + uri);
 			}
 			this.pathApi = true;
 			this.pathValCount++;
@@ -247,7 +249,7 @@ public class Api {
 					}
 				}
 				if(!ok) {
-					throw new ContainerException("invalid path variable " + pathVar.name());
+					throw new ArcherApplicationException("invalid path variable " + pathVar.name());
 				}
 				continue ;
 			}
@@ -259,7 +261,7 @@ public class Api {
 				continue;
 			}
 			if(this.bodyParam != null) {
-				throw new ContainerException("duplicated body variable at " + 
+				throw new ArcherApplicationException("duplicated body variable at " + 
 						instance.getClass().getName() + "." + method.getName());
 			}
 			String name = p.getName();
@@ -289,6 +291,9 @@ public class Api {
 			RequestParam p = orderedParams[i];
 			if(p.type() == RequestParam.BODY) {
 				byte[] body = req.getContent();
+				if(body == null || body.length == 0) {
+					throw new ParamException("can not construct " + p.param().getParameterizedType().getTypeName() + " with empty body");
+				}
 				if(ContentType.APPLICATION_JSON.getName().equals(req.getContentType())) {
 					String bodyStr;
 					try {
@@ -304,11 +309,16 @@ public class Api {
 					}
 					continue;
 				}
-				if(ContentType.MULTIPART_FORMDATA.getName().equals(req.getContentType())) { 
-					List<Multipart> multiparts = MultipartParser.parse(req);
+				if(req.getContentType().startsWith(ContentType.MULTIPART_FORMDATA.getName())) {
+					List<Multipart> multiparts;
+					try {
+						multiparts = MultipartParser.parse(req);
+					} catch (UnsupportedEncodingException e) {
+						throw new ParamException("unknown request encoding " + req.getContentEncoding(), e);
+					}
 					String json;
 					try {
-						json = MultipartUtil.multipartsToJSONString(multiparts, req.getContentEncoding());
+						json = MultipartUtil.multipartsToJSONString(multiparts, req.getContentEncoding(), req.getContentLength());
 					} catch (UnsupportedEncodingException e) {
 						throw new TypeException("invalid content-encoding " + req.getContentEncoding());
 					}
@@ -337,14 +347,40 @@ public class Api {
 		try {
 			return method.invoke(instance, paramInstances);
 		} catch (Exception e) {
-			throw new ContainerException("call " + instance.getClass().getName() + "." + method.getName() + 
+			throw new ArcherApplicationException("call " + instance.getClass().getName() + "." + method.getName() + 
 					" failed", e);
 		}
 	}
-
-	public FilterState filterAnnotation(HttpRequest req, HttpResponse res) {
-		for(AnnotationFilter filter: antFilters) {
-			if(FilterState.END.equals(filter.inputMessage(req, res))) {
+	
+	protected void addResquestFilter(AnnotationRequestFilter antReqFilter) {
+		antReqFilters.add(antReqFilter);
+	}
+	
+	protected void addResponseFilter(AnnotationResponseFilter antResFilter) {
+		antResFilters.add(antResFilter);
+	}
+	
+	protected void sortAnnotationFilters() {
+		antReqFilters.sort((o0, o1) -> {
+			return o0.priority() - o1.priority();
+		});
+		antResFilters.sort((o0, o1) -> {
+			return o0.priority() - o1.priority();
+		});
+	}
+	
+	public FilterState doFilter(HttpRequest req, HttpResponse res) {
+		for(AnnotationRequestFilter filter: antReqFilters) {
+			if(FilterState.END.equals(filter.onRequest(req, res))) {
+				return FilterState.END;
+			}
+		}
+		return FilterState.CONTINUE;
+	}
+	
+	public FilterState doFilter(HttpRequest req, HttpResponse res, Object ret) {
+		for(AnnotationResponseFilter filter: antResFilters) {
+			if(FilterState.END.equals(filter.onResponse(req, res, ret))) {
 				return FilterState.END;
 			}
 		}

@@ -11,6 +11,14 @@ public class HttpServerException extends Exception {
 		super(msg);
 	}
 	
+	public HttpServerException(Throwable t) {
+		super(t);
+	}
+	
+	public HttpServerException(String msg, Throwable t) {
+		super(msg, t);
+	}
+	
 	@Override
 	public String toString() {
 		StackTraceElement[] stacks = Thread.currentThread().getStackTrace();

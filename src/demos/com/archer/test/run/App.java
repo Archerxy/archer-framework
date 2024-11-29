@@ -1,4 +1,4 @@
-package demos;
+package com.archer.test.run;
 
 import com.archer.framework.base.ArcherApplication;
 
@@ -7,3 +7,4 @@ public class App {
 		ArcherApplication.go(args);
 	}
 }
+

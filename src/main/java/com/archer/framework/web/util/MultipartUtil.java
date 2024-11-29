@@ -4,13 +4,16 @@ import java.io.UnsupportedEncodingException;
 import java.util.Base64;
 import java.util.List;
 
+//import com.archer.framework.web.api.Multipart;
+//import com.archer.framework.web.api.MultipartType;
+
 import com.archer.net.http.multipart.Multipart;
 import com.archer.net.http.multipart.MultipartType;
 
 public class MultipartUtil {
 	
-	public static String multipartsToJSONString(List<Multipart> multiparts, String encoding) throws UnsupportedEncodingException {
-		StringBuilder sb = new StringBuilder(multiparts.size() * 1024);
+	public static String multipartsToJSONString(List<Multipart> multiparts, String encoding, int length) throws UnsupportedEncodingException {
+		StringBuilder sb = new StringBuilder(length);
 		sb.append("{");
 		int idx = 0;
 		for(Multipart part: multiparts) {
@@ -28,6 +31,7 @@ public class MultipartUtil {
 			}
 			idx = 1;
 		}
+		sb.append("}");
 		
 		return sb.toString();
 	}

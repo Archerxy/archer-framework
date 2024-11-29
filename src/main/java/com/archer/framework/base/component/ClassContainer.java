@@ -2,6 +2,7 @@ package com.archer.framework.base.component;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -11,7 +12,13 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import com.archer.framework.base.annotation.Component;
+import com.archer.framework.base.annotation.Config;
+import com.archer.framework.base.annotation.Controller;
+import com.archer.framework.base.annotation.Service;
 import com.archer.framework.base.conf.Conf;
+import com.archer.framework.base.exceptions.ArcherApplicationException;
+import com.archer.framework.base.logger.LoggerInitliazer;
 import com.archer.framework.base.timer.Timer;
 
 public class ClassContainer {
@@ -25,7 +32,7 @@ public class ClassContainer {
 		this.timer = new Timer();
 		this.classes = listAllClasses();
 		this.conf = conf;
-		this.components = new ComponentContainer(classes, this.conf);
+		this.components = new ComponentContainer(classes, this.conf, new LoggerInitliazer(conf));
 	}
 	
 	public ComponentContainer components() {
@@ -78,7 +85,6 @@ public class ClassContainer {
                     classes.add(clazz);
                 } catch (ClassNotFoundException ignore) {}
             } else if(file.isDirectory()) {
-            	
             	List<Class<?>> subClasses = getClassesFromPath(file.getAbsolutePath(), parentPkg + file.getName());
             	classes.addAll(subClasses);
             }
@@ -93,14 +99,65 @@ public class ClassContainer {
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
                 if (entry.getName().endsWith(".class")) {
+                	if(IgnoredClass.isIgnored(entry.getName())) {
+                		continue ;
+                	}
                     try {
                     	String className = entry.getName().replace('/', '.').substring(0, entry.getName().length() - 6);
                         Class<?> clazz = Class.forName(className);
-                        classes.add(clazz);
-                    } catch (ClassNotFoundException ignore) {}
+                        if(checkClass(clazz)) {
+                            classes.add(clazz);
+                        }
+                    } catch (ClassNotFoundException | NoClassDefFoundError ignore) {}
                 }
             }
         }
         return classes;
     }
+	
+	
+	
+	private boolean checkClass(Class<?> cls) {
+		if(ForwardComponent.class.isAssignableFrom(cls) && !cls.isInterface() && !Modifier.isAbstract(cls.getModifiers())) {
+			return true;
+		}
+
+		boolean annotationed = false, isNormalClass = (!cls.isInterface() && !Modifier.isAbstract(cls.getModifiers()));
+		Config config = cls.getAnnotation(Config.class);
+		if(config != null) {
+			annotationed = true;
+			if(isNormalClass) {
+				return true;
+			}
+		}
+		
+		Controller controller = cls.getAnnotation(Controller.class);
+		if(controller != null) {
+			annotationed = true;
+			if(isNormalClass) {
+				return true;
+			}
+		}
+		
+		Component component = cls.getAnnotation(Component.class);
+		if(component != null) {
+			annotationed = true;
+			if(isNormalClass) {
+				return true;
+			}
+		}
+
+		Service service = cls.getAnnotation(Service.class);
+		if(service != null) {
+			annotationed = true;
+			if(isNormalClass) {
+				return true;
+			}
+		}
+		
+		if(annotationed) {
+			throw new ArcherApplicationException("class '" + cls.getName() + "' must not be interface or abstract");
+		}
+		return false;
+	}
 }

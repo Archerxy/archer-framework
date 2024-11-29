@@ -9,6 +9,9 @@ public class XJSONComponent {
 	
 	@ConfigComponent
 	public XJSON getXjson() {
-		return new XJSON();
+		XJSON xjson = new XJSON();
+		xjson.useStrictClassMode(true);
+		xjson.useStrictJsonMode(true);
+		return xjson;
 	}
 }

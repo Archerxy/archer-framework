@@ -1,6 +1,5 @@
 package com.archer.framework.base.logger;
 
-import com.archer.framework.base.component.ComponentContainer;
 import com.archer.framework.base.conf.Conf;
 import com.archer.log.LogProperties;
 import com.archer.log.Logger;
@@ -17,18 +16,22 @@ public class LoggerInitliazer {
 	private static final String LOG_PATH = PREFIX + "logPath";
 	private static final String FILE_NAME = PREFIX + "fileName";
 	
+	Conf conf;
 	
-	ComponentContainer components;
-	
-	public LoggerInitliazer(ComponentContainer components) {
-		this.components = components;
+	public LoggerInitliazer(Conf conf) {
+		this.conf = conf;
 	}
 	
-	public void init(Conf conf) {
+	public Logger newLogger() {
+		return newLogger(null, null, null);
+	}
+	
+	public Logger newLogger(String name, String filename, String level) {
 		LogProperties properties = LogProperties.getDefault();
 		properties.appendFile(true);
-		
-		String level = conf.getString(LEVEL);
+		if(level == null || level.isEmpty()) {
+			level = conf.getString(LEVEL);
+		}
 		properties.level(level);
 		
 		String timePattern = conf.getString(TIME_PATTERN);
@@ -47,9 +50,14 @@ public class LoggerInitliazer {
 		String logPath = conf.getString(LOG_PATH);
 		properties.logPath(logPath);
 
-		String fileName = conf.getString(FILE_NAME);
-		properties.fileName(fileName);
-		
-		components.componentLogger(Logger.getLoggerAndSetPropertiesIfNotExits(LOGGER_NAME, properties));
+		if(filename == null || filename.isEmpty()) {
+			filename = conf.getString(FILE_NAME);
+		}
+		properties.fileName(filename);
+
+		if(name == null || name.isEmpty()) {
+			name = LOGGER_NAME;
+		}
+		return Logger.getLoggerAndSetPropertiesIfNotExits(name, properties);
 	}
 }

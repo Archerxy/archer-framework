@@ -206,7 +206,6 @@ public class ReflectionUtil {
 		return false;
 	}
 
-	@SuppressWarnings("deprecation")  // on JDK 9
 	public static void makeAccessible(Field field) {
 		if ((!Modifier.isPublic(field.getModifiers()) ||
 				!Modifier.isPublic(field.getDeclaringClass().getModifiers()) ||
@@ -215,7 +214,6 @@ public class ReflectionUtil {
 		}
 	}
 
-	@SuppressWarnings("deprecation")  // on JDK 9
 	public static void makeAccessible(Method method) {
 		if ((!Modifier.isPublic(method.getModifiers()) ||
 				!Modifier.isPublic(method.getDeclaringClass().getModifiers())) && !method.isAccessible()) {
@@ -223,7 +221,6 @@ public class ReflectionUtil {
 		}
 	}
 
-	@SuppressWarnings("deprecation")  // on JDK 9
 	public static void makeAccessible(Constructor<?> ctor) {
 		if ((!Modifier.isPublic(ctor.getModifiers()) ||
 				!Modifier.isPublic(ctor.getDeclaringClass().getModifiers())) && !ctor.isAccessible()) {

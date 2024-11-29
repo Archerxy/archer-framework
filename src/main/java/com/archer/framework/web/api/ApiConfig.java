@@ -5,7 +5,7 @@ import com.archer.framework.base.annotation.ConfigComponent;
 import com.archer.framework.base.annotation.Inject;
 import com.archer.framework.base.annotation.Value;
 import com.archer.framework.base.component.ComponentContainer;
-import com.archer.framework.web.filter.Filter;
+import com.archer.framework.web.filter.FilterForwardComponnet;
 
 @Config
 public class ApiConfig {
@@ -17,7 +17,7 @@ public class ApiConfig {
 	ComponentContainer container;
 	
 	@Inject
-	Filter filter;
+	FilterForwardComponnet filter;
 	
 	@ConfigComponent
 	public ApiMatcher initControllerMatcher() {

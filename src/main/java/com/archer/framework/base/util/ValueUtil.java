@@ -21,6 +21,7 @@ public class ValueUtil {
 			throws IllegalArgumentException, IllegalAccessException {
 		Class<?> cls = f.getType();
 		boolean primitive = false; 
+		f.setAccessible(true);
 		if(cls.equals(String.class)) {
 			String v = conf.getString(key);
 			if(v == null) {

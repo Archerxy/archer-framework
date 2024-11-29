@@ -16,12 +16,7 @@ public class ArcherApplication {
 		}
 		
 		Conf conf  = ConfLoader.load();
-		
 		ClassContainer classes = new ClassContainer(conf);
-		
-		LoggerInitliazer loggerIniter = new LoggerInitliazer(classes.components());
-		loggerIniter.init(conf);
-		
 		classes.loadComponents();
 	}
 }

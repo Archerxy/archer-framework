@@ -8,10 +8,9 @@ class UnknownComponent {
 	
 	private Field f;
 	
-	private Object ins;
+	private ContainerInstance ins;
 
-	public UnknownComponent(String name, Field f, Object ins) {
-		super();
+	public UnknownComponent(String name, Field f, ContainerInstance ins) {
 		this.name = name;
 		this.f = f;
 		this.ins = ins;
@@ -25,7 +24,7 @@ class UnknownComponent {
 		return f;
 	}
 
-	public Object getIns() {
+	public ContainerInstance getIns() {
 		return ins;
 	}
 }

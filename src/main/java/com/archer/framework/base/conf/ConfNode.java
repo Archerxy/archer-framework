@@ -65,6 +65,9 @@ public class ConfNode {
 				idx = i;
 			}
 		}
+		if(idx < valChars.length) {
+			ret.add(new String(Arrays.copyOfRange(valChars, idx, valChars.length)));
+		}
 		return ret;
 	}
 }
