@@ -1,0 +1,115 @@
+package com.archer.framework.datasource.mysql;
+
+import static com.mysql.cj.util.StringUtils.isNullOrEmpty;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.util.List;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.archer.framework.datasource.exceptions.SqlException;
+import com.archer.net.Channel;
+
+public class MySqlConnectionOld {
+
+    private static final Pattern CONNECTION_STRING_PTRN = Pattern.compile("(?<scheme>[\\w\\+:%]+)\\s*" // scheme: required; alphanumeric, plus, colon or percent
+            + "(?://(?<authority>[^/?#]*))?\\s*" // authority: optional; starts with "//" followed by any char except "/", "?" and "#"
+            + "(?:/(?!\\s*/)(?<path>[^?#]*))?" // path: optional; starts with "/" but not followed by "/", and then followed by by any char except "?" and "#"
+            + "(?:\\?(?!\\s*\\?)(?<query>[^#]*))?" // query: optional; starts with "?" but not followed by "?", and then followed by by any char except "#"
+            + "(?:\\s*#(?<fragment>.*))?"); // fragment: optional; starts with "#", and then followed by anything
+    private static final Pattern IP_PTRN = Pattern.compile("^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
+            "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
+            "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
+            "([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
+    
+    
+    private String url;
+    private String user;
+    private String pwd;
+    private String scheme;
+    private String authority;
+    private String database;
+    private String query;
+    
+    private String host;
+    private int port;
+    
+    private Channel mysqlChannel;
+    
+    
+    public MySqlConnectionOld(String url, String user, String pwd) {
+    	this.url = url;
+    	this.user = user;
+    	this.pwd = pwd;
+    }
+    
+	public void connect() throws SqlException {
+        try {
+            parseConnectionUrl();
+        } catch (UnsupportedEncodingException e) {}
+        
+        try {
+            mysqlChannel = new Channel();
+            
+        } catch(Exception e) {
+        	
+        }
+    }
+    
+	private void parseConnectionUrl() throws UnsupportedEncodingException, SqlException {
+
+        Matcher matcher = CONNECTION_STRING_PTRN.matcher(url);
+        if (!matcher.matches()) {
+            throw new SqlException("Invalid mysql connection url '" + url + "'");
+        }
+        this.scheme = matcher.group("scheme");
+        this.authority = matcher.group("authority");
+        this.database = matcher.group("path") == null ? null : URLDecoder.decode(matcher.group("path"), StandardCharsets.UTF_8.name()).trim();
+        this.query = matcher.group("query");
+        
+        parseAuthoritySection();
+	}
+	
+	
+    private void parseAuthoritySection() throws SqlException {
+    	String[] ipAndPort = this.authority.split(":");
+    	if(ipAndPort.length != 2) {
+            throw new SqlException("Invalid mysql connection url '" + url + "'");
+    	}
+    	if(!IP_PTRN.matcher(ipAndPort[0]).matches()) {
+            throw new SqlException("Invalid mysql connection url '" + url + "'");
+    	}
+    	this.host = ipAndPort[0];
+    	try {
+    		this.port = Integer.parseInt(ipAndPort[1]);
+    	} catch(Exception e) {
+            throw new SqlException("Invalid mysql connection url '" + url + "'");
+    	}
+    	
+    }
+    
+    public static void main(String[] args) {
+    	String url = "jdbc:mysql://192.168.145.138:3306/cross_manager?characterEncoding=UTF-8&serverTimezong=Asia/Shanghai";
+    	try {
+            Matcher matcher = CONNECTION_STRING_PTRN.matcher(url);
+            if (!matcher.matches()) {
+                throw new SqlException("Invalid mysql connection url '" + url + "'");
+            }
+            String scheme = matcher.group("scheme");
+            String authority = matcher.group("authority");
+            String path = matcher.group("path") == null ? null : URLDecoder.decode(matcher.group("path"), StandardCharsets.UTF_8.name()).trim();
+            String query = matcher.group("query");
+            
+            System.out.println(scheme);
+            System.out.println(authority);
+            System.out.println(path);
+            System.out.println(query);
+    	} catch(Exception e) {
+    		e.printStackTrace();
+    	}
+    }
+}

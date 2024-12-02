@@ -1,0 +1,71 @@
+package com.archer.framework.datasource.mysql;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.List;
+import com.archer.framework.datasource.exceptions.SqlException;
+
+public class MySqlExecutor {
+	
+	private ClassField classField = new ClassField();
+	
+	private String url;
+	
+	private String user;
+	
+	private String pwd;
+	
+	private Connection conn;
+	
+	public MySqlExecutor(String url, String user, String pwd) throws ClassNotFoundException, SqlException {
+		Class.forName("com.mysql.cj.jdbc.Driver");
+
+		try {
+			this.url = url;
+			this.user = user;
+			this.pwd = pwd;
+			conn = DriverManager.getConnection(this.url, this.user, this.pwd);
+			conn.setAutoCommit(false);
+		} catch(Exception e) {
+			throw new SqlException(e.getLocalizedMessage());
+		}
+	}
+	
+	public <T> List<T> selectSql(String sql, Class<T> cls) throws SqlException {
+		try (Statement statement = conn.createStatement()) {
+			try(ResultSet result = statement.executeQuery(sql)) {
+				return classField.mappingValues(result, cls);
+			}
+		} catch(Exception e) {
+			throw new SqlException(e.getLocalizedMessage());
+		}
+	}
+	
+	public int insertTable(String tableName, Object data) {
+		
+		
+		
+		return 0;
+	}
+	
+	public int updateSql(String sql) {
+		
+		return 0;
+	}
+	
+	public int deleteSql(String sql) {
+		
+		return 0;
+	}
+	
+	private int modify(String sql) throws SqlException {
+		try (Statement statement = conn.createStatement()) {
+			return statement.executeUpdate(sql);
+		} catch(Exception e) {
+			throw new SqlException(e.getLocalizedMessage());
+		}
+	}
+	
+}

@@ -1,0 +1,15 @@
+package com.archer.framework.datasource.mysql;
+
+import com.archer.framework.base.annotation.Value;
+
+public class MySqlConfig {
+
+	@Value(id = "archer.datasource.mysql.url")
+	private String url;
+	
+	@Value(id = "archer.datasource.mysql.user")
+	private String user;
+	
+	@Value(id = "archer.datasource.mysql.pwd")
+	private String pwd;
+}

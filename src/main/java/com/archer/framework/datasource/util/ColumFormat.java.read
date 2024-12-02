@@ -1,0 +1,38 @@
+package com.archer.framework.datasource.util;
+
+import java.util.Arrays;
+
+public class ColumFormat {
+	
+	private static int DIS = 'a' - 'A';
+	
+	public static String underlineToHump(String colum) {
+		char[] src = colum.toCharArray();
+		char[] dst = new char[src.length];
+		int off = 0;
+		for(int i = 0; i < src.length; i++) {
+			if('_' == src[i] && i < src.length - 1 && 'a' <= src[i+1] && src[i+1] <= 'z') {
+				dst[off++] = (char) (src[i+1] - DIS);
+				i++;
+			} else {
+				dst[off++] = src[i];
+			}
+		}
+		return new String(Arrays.copyOfRange(dst, 0, off));
+	}
+	
+	public static String humpToUnderline(String colum) {
+		char[] src = colum.toCharArray();
+		char[] dst = new char[src.length];
+		int off = 0;
+		for(int i = 0; i < src.length; i++) {
+			if('A' <= src[i+1] && src[i+1] <= 'Z') {
+				dst[off++] = '_';
+				dst[off++] = (char) (src[i+1] + DIS);
+			} else {
+				dst[off++] = src[i];
+			}
+		}
+		return new String(Arrays.copyOfRange(dst, 0, off));
+	}
+}

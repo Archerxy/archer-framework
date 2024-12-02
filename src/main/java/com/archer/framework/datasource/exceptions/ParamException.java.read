@@ -1,0 +1,20 @@
+package com.archer.framework.datasource.exceptions;
+
+public class ParamException extends RuntimeException {
+
+    static final long serialVersionUID = -312146793124229948L;
+    
+    static final int END_OFFSET = 32;
+    
+    public ParamException(Throwable e) {
+    	super(e);
+    }
+    
+    public ParamException(String msg) {
+    	super(msg);
+    }
+    
+    public ParamException(String msg, Throwable e) {
+    	super(msg, e);
+    }
+}

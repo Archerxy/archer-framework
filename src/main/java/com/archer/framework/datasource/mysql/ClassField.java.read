@@ -1,0 +1,181 @@
+package com.archer.framework.datasource.mysql;
+
+import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.archer.framework.base.util.ClassUtil;
+import com.archer.framework.datasource.exceptions.SqlException;
+import com.archer.framework.datasource.util.ColumFormat;
+
+public class ClassField {
+	
+	static final String BOOL_TYPE = "boolean";
+	static final String BYTE_TYPE = "byte";
+	static final String CHAR_TYPE = "char";
+	static final String SHORT_TYPE = "short";
+	static final String INT_TYPE = "int";
+	static final String LONG_TYPE = "long";
+	static final String FLOAT_TYPE = "float";
+	static final String DOUBLE_TYPE = "double";
+	
+	static final DateFormat DEFAULT_DATE_FORMAT = 
+			new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	static final DateTimeFormatter DEFAULT_TIME_FORMAT =
+			DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+	
+
+	private ConcurrentHashMap<Class<?>, Field[]> fieldsMap = new ConcurrentHashMap<>();
+	
+	public <T> List<T> mappingValues(ResultSet retSet, Class<T> cls) throws SqlException {
+
+		Field[] fields = fieldsMap.getOrDefault(cls, null);
+		if(fields == null) {
+			fields = cls.getDeclaredFields();
+			fieldsMap.put(cls, fields);
+		}
+		List<T> resultList = new LinkedList<>();
+		try {
+			while (retSet.next()) {
+				@SuppressWarnings("unchecked")
+				T instance = (T) ClassUtil.newInstance(cls);
+				ResultSetMetaData metaData = retSet.getMetaData();
+				int columnCount = metaData.getColumnCount();
+				for(int i = 0 ; i < columnCount; i++) {
+					String name = metaData.getColumnName(i);
+					for(Field f: fields) {
+						f.setAccessible(true);
+						if(f.getName().equals(ColumFormat.underlineToHump(name))) {
+							f.set(instance, formatJavaType(cls, name, i, retSet));
+						}
+					}
+				}
+				resultList.add(instance);
+	        }
+			return resultList;
+		} catch(Exception e) {
+			throw new SqlException(e.getLocalizedMessage());
+		}
+	}
+	
+	private Object formatJavaType(Class<?> cls, String name, int index, ResultSet retSet) 
+			throws SqlException {
+		if(cls.isPrimitive()) {
+			return reflectToPrimitive(cls, name, index, retSet);
+		} else {
+			return reflectToPopularClass(cls, name, index, retSet);
+		}
+	}
+	
+	private Object reflectToPrimitive(Class<?> cls, String name, int index, ResultSet retSet) 
+			throws SqlException {
+		try {
+			if(BOOL_TYPE.equals(cls.getName())) {
+				return retSet.getBoolean(index);
+			} else if(BYTE_TYPE.equals(cls.getName())) {
+				return retSet.getByte(index);
+			} else if(SHORT_TYPE.equals(cls.getName())) {
+				return retSet.getShort(index);
+			} else if(INT_TYPE.equals(cls.getName())) {
+				return retSet.getInt(index);
+			} else if(LONG_TYPE.equals(cls.getName())) {
+				return retSet.getLong(index);
+			} else if(FLOAT_TYPE.equals(cls.getName())) {
+				return retSet.getFloat(index);
+			} else if(DOUBLE_TYPE.equals(cls.getName())) {
+				return retSet.getDouble(index);
+			}
+		} catch(SQLException e) {
+			throw new SqlException(e.getLocalizedMessage());
+		}
+		throw new SqlException("unknown primitive type '" 
+				+ cls.getName() + "' of field '" + name + "'");
+	}
+	
+	private Object reflectToPopularClass(Class<?> cls, String name, int index, ResultSet retSet) 
+			throws SqlException {
+		try {
+			if(cls.equals(String.class)) {
+				return retSet.getString(index);
+			}
+			if(cls.equals(Byte.class)) {
+				return retSet.getByte(index);
+			}
+			if(cls.equals(Integer.class)) {
+				return retSet.getInt(index);
+			}
+			if(cls.equals(Long.class)) {
+				return retSet.getLong(index);
+			}
+			if(cls.equals(Float.class)) {
+				return retSet.getFloat(index);
+			}
+			if(cls.equals(Double.class)) {
+				return retSet.getDouble(index);
+			}
+			if(Date.class.isAssignableFrom(cls)) {
+				String val = retSet.getString(index);
+				try {
+					return DEFAULT_DATE_FORMAT.parse(val);
+				} catch(Exception ignore) {
+					throw new SqlException("can not parse value of '"+
+							(name)+"' to Date");
+				}
+			} else if(cls.equals(LocalDate.class)) {
+				String val = retSet.getString(index);
+				try {
+					return LocalDate.parse(val, DEFAULT_TIME_FORMAT);
+				} catch(Exception ignore) {
+					throw new SqlException("can not parse value of '"+
+							(name)+"' to LocalDate");
+				}
+			} else if(cls.equals(LocalTime.class)) {
+				String val = retSet.getString(index);
+				try {
+					return LocalTime.parse(val, DEFAULT_TIME_FORMAT);
+				} catch(Exception ignore) {
+					throw new SqlException("can not parse value of '"+
+							(name)+"' to LocalTime");
+				}
+			} else if(cls.equals(LocalDateTime.class)) {
+				String val = retSet.getString(index);
+				try {
+					return LocalDateTime.parse(val, DEFAULT_TIME_FORMAT);
+				} catch(Exception ignore) {
+					throw new SqlException("can not parse value of '"+
+							(name)+"' to LocalDateTime");
+				}
+			} else if(cls.equals(BigInteger.class)) {
+				try {
+					return BigInteger.valueOf(retSet.getLong(index));
+				} catch(Exception ignore) {
+					throw new SqlException("can not parse value of '"+
+							(name)+"' to BigInteger");
+				}
+			} else if(cls.equals(BigDecimal.class)) {
+				try {
+					return BigDecimal.valueOf(retSet.getDouble(index));
+				} catch(Exception ignore) {
+					throw new SqlException("can not parse value of '"+
+							(name)+"' to BigDecimal");
+				}
+			}
+			return retSet.getObject(index);
+		} catch(SQLException e) {
+			throw new SqlException(e.getLocalizedMessage());
+		}
+	}
+}

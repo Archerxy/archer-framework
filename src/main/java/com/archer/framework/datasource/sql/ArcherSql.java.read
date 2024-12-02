@@ -1,0 +1,10 @@
+package com.archer.framework.datasource.sql;
+
+public class ArcherSql {
+	
+	public <T> T select(String sql, Class<T> cls) {
+		
+		return null;
+	}
+	
+}
