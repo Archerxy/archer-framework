@@ -71,7 +71,7 @@ public class TestService implements TestServiceInter {
 		
 		String id;
 		
-		String msg = "杜萌生";
+		String msg = "xuyi";
 
 		String pathVar;
 		
